@@ -21,7 +21,12 @@ module Rack
 
       def generate_unique_sid(session)
         p "generate_unique_sid: session=#{session}"
-        return generate_sid if session.empty?
+        if session.empty?
+          sid = generate_sid
+          p "generate_unique_sid returns: sid=#{sid}"
+          return sid
+        end
+
         loop do
           sid = generate_sid
           p "generate_unique_sid in loop: sid=#{sid}"
@@ -42,21 +47,23 @@ module Rack
               session = {}
               sid = generate_unique_sid(session)
             end
+            p "get_session returns: sid=#{sid}, session=#{session}"
             [sid, session]
           end
         end
       end
 
       def set_session(env, session_id, new_session, options)
-        p "set_session: session_id=#{session_id}, options=#{options}"
+        p "set_session: session_id=#{session_id}, options=#{options.to_s}"
         with_lock(env, false) do
           with { |c| c.set session_id, new_session, options }
+          p "set_session returns: session_id=#{session_id}"
           session_id
         end
       end
 
       def destroy_session(env, session_id, options)
-        p "destroy_session: session_id=#{session_id}, options=#{options}"
+        p "destroy_session: session_id=#{session_id}, options=#{options.to_s}"
         with_lock(env) do
           with { |c| c.del(session_id) }
           generate_sid unless options[:drop]
